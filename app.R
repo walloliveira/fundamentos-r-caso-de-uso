@@ -68,5 +68,8 @@ yfit <- yfit*diff(h$mids[1:2])*length(x)
 lines(xfit, yfit, col="blue", lwd=2)
 
 
+dataset <- read.csv("dataset.csv")
+maisProdutiva = dataset[order((dataset$Rendimento.seco)),]
+menosProdutiva = dataset[order((-dataset$Rendimento.seco)),]
 
 
