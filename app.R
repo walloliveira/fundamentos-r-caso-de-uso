@@ -1,3 +1,5 @@
+install.packages(c("caret","devtools","ggbiplot","arules","ggplot2","iterators","geosphere"))
+#install_github("vqv/ggbiplot")
 library(caret)
 library(devtools)
 library(ggbiplot)
@@ -7,7 +9,6 @@ library(iterators)
 library(geosphere)
 
 #https://github.com/vqv/ggbiplot/blob/master/R/ggbiplot.r
-#install_github("vqv/ggbiplot")
 
 #(2) Funcoes
 getmode <- function(v) {
@@ -67,9 +68,38 @@ yfit<-dnorm(xfit,mean=mean(x),sd=sd(x))
 yfit <- yfit*diff(h$mids[1:2])*length(x) 
 lines(xfit, yfit, col="blue", lwd=2)
 
-
 dataset <- read.csv("dataset.csv")
-maisProdutiva = dataset[order((dataset$Rendimento.seco)),]
-menosProdutiva = dataset[order((-dataset$Rendimento.seco)),]
+
+# 1.Quais as áreas mais produtivas?
+maisProdutiva = dataset[order((-dataset$Rendimento.seco)),]
 
 
+# 2.Qual a composição mais frequente da área mais produtiva?
+colunas <- c("Calcio","Magnesio","Al","Potassio","Fosforo","Enxofre","MO","CTC","SaturacaoPorBases","CalcioSaturacaoDeBases","MagnesioSaturacaoDebases","PotassioSaturacaoDeBases","pH")
+baseAlta.new <- dataset[which(dataset$PontosAmostrais == 107), colunas]
+baseAlta.new[, colunas] <- lapply(baseAlta.new[, colunas], factor)
+baseAlta.tr <- apriori(
+  baseAlta.new,
+  parameter = list(support = 1, minlen = 13, maxlen = 13, target = "frequent")
+)
+
+inspect(baseAlta.tr)
+
+# 3.Qual o nutriente que mais corresponde positivamente nas áreas mais produtivas?
+dataset.new <- dataset[, -(17:18)]	#Retira Latitude e Longitude da baseSolo
+dataset.pca <- prcomp(dataset.new[, 5:16], center = TRUE, scale. = TRUE) #Retira Latitude e Longitude da baseColheita para Calcular PCA
+g <- ggbiplot(dataset.pca, groups = dataset$Produtividade, obs.scale = 1, var.scale = 1, circle = TRUE, ellipse = TRUE)
+print(g)
+
+
+# 4.Qual a área menos produtiva?
+menosProdutiva = dataset[order((dataset$Rendimento.seco)),]
+
+# 5.Qual a composição mais frequente da área menos produtiva?
+colunas <- c("Calcio","Magnesio","Al","Potassio","Fosforo","Enxofre","MO","CTC","SaturacaoPorBases","CalcioSaturacaoDeBases","MagnesioSaturacaoDebases","PotassioSaturacaoDeBases","pH")
+baseBaixa.new <- dataset[which(dataset$PontosAmostrais == "123"), colunas]
+baseBaixa.new[, colunas] <- lapply(baseBaixa.new[, colunas], factor)
+baseBaixa.tr <- apriori(
+  baseBaixa.new,
+  parameter = list(support = 1, minlen = 13, maxlen = 13, target = "frequent")
+)
